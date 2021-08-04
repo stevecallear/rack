@@ -45,6 +45,16 @@ func TestNew(t *testing.T) {
 			}),
 		},
 		{
+			name: "should return a default response if none is written",
+			handler: func(rack.Context) error {
+				return nil
+			},
+			payload: newV2Request(nil),
+			exp: newV2Response(func(r *events.APIGatewayV2HTTPResponse) {
+				r.StatusCode = http.StatusOK
+			}),
+		},
+		{
 			name: "should return the response",
 			handler: func(c rack.Context) error {
 				v := struct {
@@ -140,6 +150,22 @@ func TestNewWithConfig(t *testing.T) {
 				}
 				r.Body = `{"message":"error"}`
 			}),
+		},
+		{
+			name: "should use the empty response handler",
+			setup: func(c *rack.Config) {
+				c.OnError = func(_ rack.Context, err error) error {
+					return err
+				}
+				c.OnEmptyResponse = func(rack.Context) error {
+					return errors.New("error")
+				}
+			},
+			handler: func(c rack.Context) error {
+				return nil
+			},
+			payload: newV2Request(nil),
+			err:     true,
 		},
 		{
 			name: "should use the middleware",
