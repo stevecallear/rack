@@ -30,7 +30,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "should handle handler errors",
 			handler: func(rack.Context) error {
-				return rack.NewError(http.StatusConflict, "error")
+				return rack.WrapError(http.StatusConflict, errors.New("error"))
 			},
 			payload: newV2Request(nil),
 			exp: newV2Response(func(r *events.APIGatewayV2HTTPResponse) {
@@ -42,6 +42,16 @@ func TestNew(t *testing.T) {
 					"Content-Type": {"application/json"},
 				}
 				r.Body = `{"message":"error"}`
+			}),
+		},
+		{
+			name: "should return a default response if none is written",
+			handler: func(rack.Context) error {
+				return nil
+			},
+			payload: newV2Request(nil),
+			exp: newV2Response(func(r *events.APIGatewayV2HTTPResponse) {
+				r.StatusCode = http.StatusOK
 			}),
 		},
 		{
@@ -96,7 +106,7 @@ func TestNewWithConfig(t *testing.T) {
 		{
 			name: "should return an error if the payload is invalid",
 			setup: func(c *rack.Config) {
-				c.Resolver = rack.NewStaticResolver(rack.APIGatewayV2HTTPEventProcessor)
+				c.Resolver = rack.ResolveStatic(rack.APIGatewayV2HTTPEventProcessor)
 			},
 			payload: []byte("{"),
 			err:     true,
@@ -140,6 +150,22 @@ func TestNewWithConfig(t *testing.T) {
 				}
 				r.Body = `{"message":"error"}`
 			}),
+		},
+		{
+			name: "should use the empty response handler",
+			setup: func(c *rack.Config) {
+				c.OnError = func(_ rack.Context, err error) error {
+					return err
+				}
+				c.OnEmptyResponse = func(rack.Context) error {
+					return errors.New("error")
+				}
+			},
+			handler: func(c rack.Context) error {
+				return nil
+			},
+			payload: newV2Request(nil),
+			err:     true,
 		},
 		{
 			name: "should use the middleware",

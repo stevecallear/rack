@@ -5,16 +5,22 @@ import (
 	"net/http"
 )
 
-// StatusError represents a status code error
-type StatusError struct {
-	code    int
-	message string
-	inner   error
-}
+type (
+	// StatusError represents a status code error
+	StatusError struct {
+		code int
+		err  error
+	}
+
+	statusError interface {
+		Code() int
+		error
+	}
+)
 
 // StatusCode returns the status code for the specified error
 func StatusCode(err error) int {
-	se := new(StatusError)
+	var se statusError
 	if errors.As(err, &se) {
 		return se.Code()
 	}
@@ -22,20 +28,11 @@ func StatusCode(err error) int {
 	return http.StatusInternalServerError
 }
 
-// NewError returns a new status error
-func NewError(code int, message string) *StatusError {
-	return &StatusError{
-		code:    code,
-		message: message,
-	}
-}
-
 // WrapError wraps the specified error
 func WrapError(code int, err error) *StatusError {
 	return &StatusError{
-		code:    code,
-		message: err.Error(),
-		inner:   err,
+		code: code,
+		err:  err,
 	}
 }
 
@@ -46,10 +43,10 @@ func (e *StatusError) Code() int {
 
 // Error returns the error message
 func (e *StatusError) Error() string {
-	return e.message
+	return e.err.Error()
 }
 
 // Unwrap returns the wrapped error
 func (e *StatusError) Unwrap() error {
-	return e.inner
+	return e.err
 }

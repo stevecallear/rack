@@ -18,10 +18,11 @@ type (
 
 	// Config represent handler configuration
 	Config struct {
-		Resolver   Resolver
-		Middleware MiddlewareFunc
-		OnBind     func(Context, interface{}) error
-		OnError    func(Context, error) error
+		Resolver        Resolver
+		Middleware      MiddlewareFunc
+		OnBind          func(Context, interface{}) error
+		OnError         func(Context, error) error
+		OnEmptyResponse HandlerFunc
 	}
 
 	// Request represents a canonical request type
@@ -71,6 +72,13 @@ func NewWithConfig(c Config, h HandlerFunc) lambda.Handler {
 		onBind = func(Context, interface{}) error { return nil }
 	}
 
+	onEmptyResponse := c.OnEmptyResponse
+	if onEmptyResponse == nil {
+		onEmptyResponse = func(c Context) error {
+			return c.NoContent(http.StatusOK)
+		}
+	}
+
 	return invokeFunc(func(ctx context.Context, payload []byte) ([]byte, error) {
 		p, err := resolver.Resolve(payload)
 		if err != nil {
@@ -95,6 +103,14 @@ func NewWithConfig(c Config, h HandlerFunc) lambda.Handler {
 		if err = h(c); err != nil {
 			if err = onError(c, err); err != nil {
 				return nil, err
+			}
+		}
+
+		if c.response.StatusCode == 0 {
+			if err = onEmptyResponse(c); err != nil {
+				if err = onError(c, err); err != nil {
+					return nil, err
+				}
 			}
 		}
 

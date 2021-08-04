@@ -62,7 +62,7 @@ Handler configuration can be optionally specified by using `NewWithConfig`.
 Rack supports API Gateway proxy integration, API Gateway V2 HTTP and ALB target group events. By default the event type is resolved at runtime, but this behaviour can be configured as required. The following example configures the handler to marshal to/from V2 HTTP events regardless of the payload.
 ```
 cfg := rack.Config{
-    Resolver:   rack.NewStaticResolver(rack.APIGatewayV2HTTPEventProcessor),
+    Resolver:   rack.ResolveStatic(rack.APIGatewayV2HTTPEventProcessor),
 }
 
 h := rack.NewWithConfig(cfg, handler)
