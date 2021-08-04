@@ -6,10 +6,10 @@ import (
 	"github.com/stevecallear/rack"
 )
 
-func TestNewStaticResolver(t *testing.T) {
+func TestResolveStatic(t *testing.T) {
 	t.Run("should return the processor", func(t *testing.T) {
 		exp := &testProcessor{canProcess: true}
-		sut := rack.NewStaticResolver(exp)
+		sut := rack.ResolveStatic(exp)
 
 		act, err := sut.Resolve(nil)
 		assertErrorExists(t, err, false)
@@ -19,7 +19,7 @@ func TestNewStaticResolver(t *testing.T) {
 	})
 }
 
-func TestNewDynamicResolver(t *testing.T) {
+func TestResolveConditional(t *testing.T) {
 	proc := &testProcessor{canProcess: true}
 
 	tests := []struct {
@@ -48,7 +48,7 @@ func TestNewDynamicResolver(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sut := rack.NewConditionalResolver(tt.procs...)
+			sut := rack.ResolveConditional(tt.procs...)
 
 			act, err := sut.Resolve(nil)
 			assertErrorExists(t, err, tt.err)

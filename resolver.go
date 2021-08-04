@@ -15,26 +15,26 @@ var (
 	// ErrUnsupportedEventType indicates that the supplied event payload is not supported
 	ErrUnsupportedEventType = errors.New("unsupported event type")
 
-	defaultResolver = NewConditionalResolver(
+	defaultResolver = ResolveConditional(
 		APIGatewayProxyEventProcessor,
 		APIGatewayV2HTTPEventProcessor,
 		ALBTargetGroupEventProcessor,
 	)
 )
 
-// NewStaticResolver returns a new static event processor resolver
+// ResolveStatic returns a new static event processor resolver
 // The supplied processor will be invoked for marshal/unmarshal
 // operations, regardless of the incoming payload.
-func NewStaticResolver(p Processor) Resolver {
+func ResolveStatic(p Processor) Resolver {
 	return resolverFunc(func([]byte) (Processor, error) {
 		return p, nil
 	})
 }
 
-// NewConditionalResolver returns a new conditional event processor resolver
+// ResolveConditional returns a new conditional event processor resolver
 // The first applicable processor will be returned, based on the
 // incoming payload.
-func NewConditionalResolver(p ...Processor) Resolver {
+func ResolveConditional(p ...Processor) Resolver {
 	return resolverFunc(func(payload []byte) (Processor, error) {
 		for _, pp := range p {
 			if pp.CanProcess(payload) {

@@ -96,7 +96,7 @@ func TestNewWithConfig(t *testing.T) {
 		{
 			name: "should return an error if the payload is invalid",
 			setup: func(c *rack.Config) {
-				c.Resolver = rack.NewStaticResolver(rack.APIGatewayV2HTTPEventProcessor)
+				c.Resolver = rack.ResolveStatic(rack.APIGatewayV2HTTPEventProcessor)
 			},
 			payload: []byte("{"),
 			err:     true,
