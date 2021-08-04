@@ -9,6 +9,8 @@ import (
 )
 
 func TestStatusCode(t *testing.T) {
+	err := errors.New("error")
+
 	tests := []struct {
 		name string
 		err  error
@@ -16,12 +18,12 @@ func TestStatusCode(t *testing.T) {
 	}{
 		{
 			name: "should return 500 if the error is not a status error",
-			err:  errors.New("error"),
+			err:  err,
 			exp:  http.StatusInternalServerError,
 		},
 		{
 			name: "should return status error codes",
-			err:  rack.NewError(http.StatusBadRequest, "error"),
+			err:  rack.WrapError(http.StatusBadRequest, err),
 			exp:  http.StatusBadRequest,
 		},
 	}
@@ -39,7 +41,7 @@ func TestStatusCode(t *testing.T) {
 func TestStatusError_Code(t *testing.T) {
 	t.Run("should return the status code", func(t *testing.T) {
 		const exp = http.StatusConflict
-		err := rack.NewError(exp, "error")
+		err := rack.WrapError(exp, errors.New("error"))
 
 		act := err.Code()
 		if act != exp {
@@ -49,57 +51,25 @@ func TestStatusError_Code(t *testing.T) {
 }
 
 func TestStatusError_Error(t *testing.T) {
-	tests := []struct {
-		name string
-		sut  *rack.StatusError
-		exp  string
-	}{
-		{
-			name: "should return the error message",
-			sut:  rack.NewError(http.StatusBadRequest, "error"),
-			exp:  "error",
-		}, {
-			name: "should return the wrapped error message",
-			sut:  rack.WrapError(http.StatusBadRequest, errors.New("error")),
-			exp:  "error",
-		},
-	}
+	t.Run("should return the wrapped error message", func(t *testing.T) {
+		const exp = "error"
+		sut := rack.WrapError(http.StatusBadRequest, errors.New(exp))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			act := tt.sut.Error()
-			if act != tt.exp {
-				t.Errorf("got %s, expected %s", act, tt.exp)
-			}
-		})
-	}
+		act := sut.Error()
+		if act != exp {
+			t.Errorf("got %s, expected %s", act, exp)
+		}
+	})
 }
 
 func TestStatusError_Unwrap(t *testing.T) {
-	err := errors.New("error")
+	t.Run("should return the wrapped error", func(t *testing.T) {
+		exp := errors.New("error")
+		sut := rack.WrapError(http.StatusBadRequest, exp)
 
-	tests := []struct {
-		name string
-		sut  *rack.StatusError
-		exp  error
-	}{
-		{
-			name: "should return nil if there is no wrapped error",
-			sut:  rack.NewError(http.StatusBadRequest, "error"),
-			exp:  nil,
-		}, {
-			name: "should return the wrapped error",
-			sut:  rack.WrapError(http.StatusBadRequest, err),
-			exp:  err,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			act := tt.sut.Unwrap()
-			if act != tt.exp {
-				t.Errorf("got %v, expected %v", act, tt.exp)
-			}
-		})
-	}
+		act := errors.Unwrap(sut)
+		if act != exp {
+			t.Errorf("got %v, expected %v", act, exp)
+		}
+	})
 }

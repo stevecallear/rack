@@ -30,7 +30,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "should handle handler errors",
 			handler: func(rack.Context) error {
-				return rack.NewError(http.StatusConflict, "error")
+				return rack.WrapError(http.StatusConflict, errors.New("error"))
 			},
 			payload: newV2Request(nil),
 			exp: newV2Response(func(r *events.APIGatewayV2HTTPResponse) {
