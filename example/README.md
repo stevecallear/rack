@@ -1,4 +1,4 @@
-# Serverless
+# Example
 This example demonstrates how to deploy a single function using Serverless that handles API Gateway proxy integration, API Gateway HTTP V2 and ALB target group events. The basic handler is defined in `main.go` and the event handlers are specified in `serverless.yml`.
 
 ## Deploy
